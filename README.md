@@ -1,3 +1,3 @@
-![Luan Logo](./img/luan_logo.jpg)
+![Luan Logo](./img/luan_logo.png)
 
 # Luan Compiler
