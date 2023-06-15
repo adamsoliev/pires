@@ -2,6 +2,7 @@
 #include "luan.h"
 
 static struct Node *expr(struct Token **rest, struct Token *tok);
+static struct Node *expr_stmt(struct Token **rest, struct Token *tok);
 static struct Node *equality(struct Token **rest, struct Token *tok);
 static struct Node *relational(struct Token **rest, struct Token *tok);
 static struct Node *add(struct Token **rest, struct Token *tok);
@@ -32,6 +33,18 @@ static struct Node *new_num(int val) {
 static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
     struct Node *node = new_node(kind);
     node->lhs = expr;
+    return node;
+};
+
+// stmt = expr-stmt
+static struct Node *stmt(struct Token **rest, struct Token *token) {
+    return expr_stmt(rest, token);
+};
+
+// expr-stmt = expr ";"
+static struct Node *expr_stmt(struct Token **rest, struct Token *token) {
+    struct Node *node = new_unary(ND_EXPR_STMT, expr(&token, token));
+    *rest = skip(token, ";");
     return node;
 };
 
@@ -158,9 +171,12 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
 };
 
 struct Node *parse(struct Token *token) {
-    struct Node *node = expr(&token, token);
-    if (token->kind != TK_EOF) {
-        error_tok(token, "Extra token");
+    struct Node head = {};
+    struct Node *cur = &head;
+
+    while (token->kind != TK_EOF) {
+        cur->next = stmt(&token, token);
+        cur = cur->next;
     }
-    return node;
+    return head.next;
 }
