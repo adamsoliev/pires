@@ -1,7 +1,11 @@
 CFLAGS=-std=c11 -g -fno-common
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
 
-luan: main.o
-	$(CC) $(CFLAGS) -o luan main.o
+luan: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) 
+
+$(OBJS): luan.h
 
 test: luan
 	./test.sh
