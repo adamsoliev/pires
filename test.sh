@@ -24,5 +24,8 @@ assert 0 0
 assert 32 32
 assert 21 "5+20-4"
 assert 41 "12 + 34 - 5 "
+assert 47 "5+6*7"
+assert 15 "5*(9-6)"
+assert 70 "1 + 2 * 3 - 4 / 2 + 5 * (6 + 7)"
 
 echo OK
