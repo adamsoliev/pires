@@ -3,12 +3,25 @@
 
 static struct Node *expr(struct Token **rest, struct Token *tok);
 static struct Node *expr_stmt(struct Token **rest, struct Token *tok);
+static struct Node *assign(struct Token **rest, struct Token *tok);
 static struct Node *equality(struct Token **rest, struct Token *tok);
 static struct Node *relational(struct Token **rest, struct Token *tok);
 static struct Node *add(struct Token **rest, struct Token *tok);
 static struct Node *mul(struct Token **rest, struct Token *tok);
 static struct Node *unary(struct Token **rest, struct Token *tok);
 static struct Node *primary(struct Token **rest, struct Token *tok);
+
+struct Obj *locals;
+
+static struct Obj *find_var(struct Token *token) {
+    for (struct Obj *var = locals; var; var = var->next) {
+        if (strlen(var->name) == token->len &&
+            !strncmp(token->loc, var->name, token->len)) {
+            return var;
+        }
+    }
+    return NULL;
+}
 
 static struct Node *new_node(enum NodeKind kind) {
     struct Node *node = calloc(1, sizeof(struct Node));
@@ -30,6 +43,20 @@ static struct Node *new_num(int val) {
     return node;
 };
 
+static struct Node *new_var_node(struct Obj *var) {
+    struct Node *node = new_node(ND_VAR);
+    node->var = var;
+    return node;
+};
+
+static struct Obj *new_lvar(char *name) {
+    struct Obj *var = calloc(1, sizeof(struct Obj));
+    var->name = name;
+    var->next = locals;
+    locals = var;
+    return var;
+}
+
 static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
     struct Node *node = new_node(kind);
     node->lhs = expr;
@@ -48,9 +75,19 @@ static struct Node *expr_stmt(struct Token **rest, struct Token *token) {
     return node;
 };
 
-// expr = equality
+// expr = assign
 static struct Node *expr(struct Token **rest, struct Token *token) {
-    return equality(rest, token);
+    return assign(rest, token);
+};
+
+// assign = equality ("=" assign)?
+static struct Node *assign(struct Token **rest, struct Token *token) {
+    struct Node *node = equality(&token, token);
+    if (equal(token, "=")) {
+        node = new_binary(ND_ASSIGN, node, assign(&token, token->next));
+    }
+    *rest = token;
+    return node;
 };
 
 // equality = relational ("==" relational | "!=" relational)*
@@ -153,12 +190,21 @@ static struct Node *unary(struct Token **rest, struct Token *token) {
     return primary(rest, token);
 }
 
-// primary = "(" expr ")" | num
+// primary = "(" expr ")" | ident | num
 static struct Node *primary(struct Token **rest, struct Token *token) {
     if (equal(token, "(")) {
         struct Node *node = expr(&token, token->next);
         *rest = skip(token, ")");
         return node;
+    }
+
+    if (token->kind == TK_IDENT) {
+        struct Obj *var = find_var(token);
+        if (!var) {
+            var = new_lvar(strndup(token->loc, token->len));
+        }
+        *rest = token->next;
+        return new_var_node(var);
     }
 
     if (token->kind == TK_NUM) {
@@ -168,9 +214,10 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
     }
 
     error_tok(token, "Expected an expression");
+    return NULL;
 };
 
-struct Node *parse(struct Token *token) {
+struct Function *parse(struct Token *token) {
     struct Node head = {};
     struct Node *cur = &head;
 
@@ -178,5 +225,8 @@ struct Node *parse(struct Token *token) {
         cur->next = stmt(&token, token);
         cur = cur->next;
     }
-    return head.next;
+    struct Function *prog = calloc(1, sizeof(struct Function));
+    prog->body = head.next;
+    prog->locals = locals;
+    return prog;
 }

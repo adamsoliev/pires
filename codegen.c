@@ -18,6 +18,18 @@ static void pop(char *reg) {
     depth--;
 }
 
+static int align_to(int n, int align) {
+    return (n + align - 1) / align * align;
+}
+
+static void gen_addr(struct Node *node) {
+    if (node->kind == ND_VAR) {
+        printf("  addi a0, fp, %d\n", node->var->offset);
+        return;
+    }
+    error("Not an lvalue");
+}
+
 static void gen_expr(struct Node *node) {
     switch (node->kind) {
         case ND_NUM:
@@ -27,6 +39,19 @@ static void gen_expr(struct Node *node) {
             gen_expr(node->lhs);
             printf("  neg a0, a0\n");
             return;
+        case ND_VAR:
+            gen_addr(node);
+            printf("  ld a0, 0(a0)\n");
+            return;
+        case ND_ASSIGN:
+            gen_addr(node->lhs);
+            push();
+            gen_expr(node->rhs);
+            pop("a1");
+            printf("  sd a0, 0(a1)\n");
+            return;
+        default:
+            break;
     }
 
     gen_expr(node->rhs);
@@ -62,6 +87,8 @@ static void gen_expr(struct Node *node) {
             printf("    slt a0, a1, a0\n");
             printf("    xori a0, a0, 1\n");
             return;
+        default:
+            break;
     }
     error("Invalid expression");
 };
@@ -74,13 +101,33 @@ static void get_stmt(struct Node *node) {
     error("Invalid statement");
 };
 
-void codegen(struct Node *node) {
+static void assign_lvar_offsets(struct Function *prog) {
+    int offset = 0;
+    for (struct Obj *var = prog->locals; var; var = var->next) {
+        offset += 8;
+        var->offset = -offset;
+    }
+    prog->stack_size = align_to(offset, 16);
+}
+
+void codegen(struct Function *prog) {
+    assign_lvar_offsets(prog);
+
     printf("  .globl main\n");
     printf("main:\n");
 
-    for (struct Node *n = node; n; n = n->next) {
+    printf("  addi sp, sp, -8\n");
+    printf("  sd fp, 0(sp)\n");
+    printf("  mv fp, sp\n");
+    printf("  addi sp, sp, -%d\n", prog->stack_size);
+
+    for (struct Node *n = prog->body; n; n = n->next) {
         get_stmt(n);
         assert(depth == 0);
     }
+    printf("  mv sp, fp\n");
+    printf("  ld fp, 0(sp)\n");
+    printf("  addi sp, sp, 8\n");
+
     printf("  ret\n");
 }

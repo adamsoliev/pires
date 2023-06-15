@@ -62,6 +62,14 @@ static bool startswith(char *p, char *q) {
     return strncmp(p, q, strlen(q)) == 0;
 }
 
+static bool is_ident1(char c) {
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+static bool is_ident2(char c) {
+    return is_ident1(c) || ('0' <= c && c <= '9');
+}
+
 static int read_punct(char *p) {
     if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") ||
         startswith(p, ">=")) {
@@ -85,6 +93,15 @@ struct Token *tokenize(char *p) {
             char *q = p;
             cur->val = strtoul(p, &p, 10);
             cur->len = p - q;
+            continue;
+        }
+
+        if (is_ident1(*p)) {
+            char *start = p;
+            do {
+                p++;
+            } while (is_ident2(*p));
+            cur = cur->next = new_token(TK_IDENT, start, p);
             continue;
         }
 

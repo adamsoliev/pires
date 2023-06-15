@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -9,6 +11,7 @@
 // tokenize.c
 
 enum TokenKind {
+    TK_IDENT,
     TK_PUNCT,
     TK_NUM,
     TK_EOF,
@@ -31,6 +34,18 @@ struct Token *tokenize(char *input);
 
 // parse.c
 
+struct Obj {
+    struct Obj *next;
+    char *name;
+    int offset;
+};
+
+struct Function {
+    struct Node *body;
+    struct Obj *locals;
+    int stack_size;
+};
+
 enum NodeKind {
     ND_ADD,
     ND_SUB,
@@ -41,7 +56,9 @@ enum NodeKind {
     ND_NE,         // !=
     ND_LT,         // <
     ND_LE,         // <=
+    ND_ASSIGN,     // =
     ND_EXPR_STMT,  // Expression statement
+    ND_VAR,        // Variable
     ND_NUM,
 };
 
@@ -50,11 +67,12 @@ struct Node {
     struct Node *next;
     struct Node *lhs;
     struct Node *rhs;
+    struct Obj *var;
     int val;
 };
 
-struct Node *parse(struct Token *tok);
+struct Function *parse(struct Token *tok);
 
 // codegen.c
 
-void codegen(struct Node *node);
+void codegen(struct Function *node);
