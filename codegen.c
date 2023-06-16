@@ -95,6 +95,11 @@ static void gen_expr(struct Node *node) {
 
 static void get_stmt(struct Node *node) {
     switch (node->kind) {
+        case ND_BLOCK:
+            for (struct Node *n = node->body; n; n = n->next) {
+                get_stmt(n);
+            }
+            return;
         case ND_RETURN:
             gen_expr(node->lhs);
             printf("   j .L.return\n");
@@ -128,10 +133,8 @@ void codegen(struct Function *prog) {
     printf("  mv fp, sp\n");
     printf("  addi sp, sp, -%d\n", prog->stack_size);
 
-    for (struct Node *n = prog->body; n; n = n->next) {
-        get_stmt(n);
-        assert(depth == 0);
-    }
+    get_stmt(prog->body);
+    assert(depth == 0);
 
     printf(".L.return:\n");
     printf("  mv sp, fp\n");

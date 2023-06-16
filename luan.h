@@ -59,6 +59,7 @@ enum NodeKind {
     ND_LE,         // <=
     ND_ASSIGN,     // =
     ND_RETURN,     // "return"
+    ND_BLOCK,      // { ... }
     ND_EXPR_STMT,  // Expression statement
     ND_VAR,        // Variable
     ND_NUM,
@@ -69,8 +70,9 @@ struct Node {
     struct Node *next;
     struct Node *lhs;
     struct Node *rhs;
-    struct Obj *var;
-    int val;
+    struct Obj *var;    // Used if kind == ND_VAR
+    int val;            // Used if kind == ND_NUM
+    struct Node *body;  // ND_BLOCK
 };
 
 struct Function *parse(struct Token *tok);

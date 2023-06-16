@@ -1,6 +1,7 @@
 
 #include "luan.h"
 
+static struct Node *compound_stmt(struct Token **rest, struct Token *tok);
 static struct Node *expr(struct Token **rest, struct Token *tok);
 static struct Node *expr_stmt(struct Token **rest, struct Token *tok);
 static struct Node *assign(struct Token **rest, struct Token *tok);
@@ -64,6 +65,7 @@ static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
 };
 
 // stmt = "return" expr ";"
+//      | "{" compound-stmt* "}"
 //      | expr-stmt
 static struct Node *stmt(struct Token **rest, struct Token *token) {
     if (equal(token, "return")) {
@@ -71,8 +73,25 @@ static struct Node *stmt(struct Token **rest, struct Token *token) {
         *rest = skip(token, ";");
         return node;
     }
+    if (equal(token, "{")) {
+        return compound_stmt(rest, token->next);
+    }
     return expr_stmt(rest, token);
 };
+
+// compound-stmt =  stmt* "}"
+static struct Node *compound_stmt(struct Token **rest, struct Token *token) {
+    struct Node head = {};
+    struct Node *cur = &head;
+
+    while (!equal(token, "}")) {
+        cur = cur->next = stmt(&token, token);
+    }
+    struct Node *node = new_node(ND_BLOCK);
+    node->body = head.next;
+    *rest = token->next;
+    return node;
+}
 
 // expr-stmt = expr ";"
 static struct Node *expr_stmt(struct Token **rest, struct Token *token) {
@@ -223,16 +242,12 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
     return NULL;
 };
 
+// program = stmt*
 struct Function *parse(struct Token *token) {
-    struct Node head = {};
-    struct Node *cur = &head;
+    token = skip(token, "{");
 
-    while (token->kind != TK_EOF) {
-        cur->next = stmt(&token, token);
-        cur = cur->next;
-    }
     struct Function *prog = calloc(1, sizeof(struct Function));
-    prog->body = head.next;
+    prog->body = compound_stmt(&token, token);
     prog->locals = locals;
     return prog;
 }
