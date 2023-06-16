@@ -31,6 +31,7 @@ void error_at(char *loc, char *fmt, ...);
 void error_tok(struct Token *tok, char *fmt, ...);
 bool equal(struct Token *tok, char *op);
 struct Token *skip(struct Token *tok, char *op);
+bool consume(struct Token **rest, struct Token *tok, char *str);
 struct Token *tokenize(char *input);
 
 // parse.c
@@ -38,6 +39,7 @@ struct Token *tokenize(char *input);
 struct Obj {
     struct Obj *next;
     char *name;
+    struct Type *ty;
     int offset;
 };
 
@@ -100,10 +102,12 @@ enum TypeKind {
 struct Type {
     enum TypeKind kind;
     struct Type *base;
+    struct Token *name;
 };
 
 extern struct Type *ty_int;
 bool is_integer(struct Type *ty);
+struct Type *pointer_to(struct Type *base);
 void add_type(struct Node *node);
 
 // codegen.c

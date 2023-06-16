@@ -43,6 +43,15 @@ struct Token *skip(struct Token *token, char *s) {
     return token->next;
 }
 
+bool consume(struct Token **rest, struct Token *token, char *s) {
+    if (equal(token, s)) {
+        *rest = token->next;
+        return true;
+    }
+    *rest = token;
+    return false;
+}
+
 int get_number(struct Token *token) {
     if (token->kind != TK_NUM) {
         error_tok(token, "Expected a number");
@@ -77,7 +86,7 @@ static int read_punct(char *p) {
 }
 
 static bool is_keyword(struct Token *token) {
-    static char *kw[] = {"return", "if", "else", "for", "while"};
+    static char *kw[] = {"return", "if", "else", "for", "while", "int"};
 
     for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
         if (equal(token, kw[i])) {
