@@ -2,6 +2,7 @@
 #include "luan.h"
 
 static struct Node *compound_stmt(struct Token **rest, struct Token *tok);
+static struct Node *stmt(struct Token **rest, struct Token *tok);
 static struct Node *expr(struct Token **rest, struct Token *tok);
 static struct Node *expr_stmt(struct Token **rest, struct Token *tok);
 static struct Node *assign(struct Token **rest, struct Token *tok);
@@ -133,6 +134,7 @@ static struct Node *compound_stmt(struct Token **rest, struct Token *token) {
 
     while (!equal(token, "}")) {
         cur = cur->next = stmt(&token, token);
+        add_type(cur);
     }
     node->body = head.next;
     *rest = token->next;
@@ -221,6 +223,64 @@ static struct Node *relational(struct Token **rest, struct Token *token) {
     }
 }
 
+// take care of this "ptr1 + n => sizeof(*ptr1) * n" scaling
+static struct Node *new_add(struct Node *lhs, struct Node *rhs,
+                            struct Token *token) {
+    add_type(lhs);
+    add_type(rhs);
+
+    // num + num
+    if (is_integer(lhs->ty) && is_integer(rhs->ty)) {
+        return new_binary(ND_ADD, lhs, rhs, token);
+    }
+
+    if (lhs->ty->base && rhs->ty->base) {
+        error_tok(token, "Invalid operands");
+    }
+
+    // 'num + ptr' => 'ptr + num'
+    if (!lhs->ty->base && rhs->ty->base) {
+        struct Node *tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
+
+    // ptr + num
+    rhs = new_binary(ND_MUL, rhs, new_num(8, token), token);
+    return new_binary(ND_ADD, lhs, rhs, token);
+}
+
+// similar to new_add
+static struct Node *new_sub(struct Node *lhs, struct Node *rhs,
+                            struct Token *token) {
+    add_type(lhs);
+    add_type(rhs);
+
+    // num - num
+    if (is_integer(lhs->ty) && is_integer(rhs->ty)) {
+        return new_binary(ND_SUB, lhs, rhs, token);
+    }
+
+    // ptr - num
+    if (lhs->ty->base && is_integer(rhs->ty)) {
+        rhs = new_binary(ND_MUL, rhs, new_num(8, token), token);
+        add_type(rhs);
+        struct Node *node = new_binary(ND_SUB, lhs, rhs, token);
+        node->ty = lhs->ty;
+        return node;
+    }
+
+    // ptr - ptr, which returns how many elements are between the two.
+    if (lhs->ty->base && rhs->ty->base) {
+        struct Node *node = new_binary(ND_SUB, lhs, rhs, token);
+        node->ty = ty_int;
+        return new_binary(ND_DIV, node, new_num(8, token), token);
+    }
+
+    error_tok(token, "Invalid operands");
+    return NULL;
+}
+
 // add = mul ("+" mul | "-" mul)*
 static struct Node *add(struct Token **rest, struct Token *token) {
     struct Node *node = mul(&token, token);
@@ -228,12 +288,12 @@ static struct Node *add(struct Token **rest, struct Token *token) {
     for (;;) {
         struct Token *start = token;
         if (equal(token, "+")) {
-            node = new_binary(ND_ADD, node, mul(&token, token->next), start);
+            node = new_add(node, mul(&token, token->next), start);
             continue;
         }
 
         if (equal(token, "-")) {
-            node = new_binary(ND_SUB, node, mul(&token, token->next), start);
+            node = new_sub(node, mul(&token, token->next), start);
             continue;
         }
 

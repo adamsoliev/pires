@@ -72,6 +72,7 @@ enum NodeKind {
 struct Node {
     enum NodeKind kind;
     struct Node *next;
+    struct Type *ty;
     struct Token *token;
     struct Node *lhs;
     struct Node *rhs;
@@ -88,6 +89,22 @@ struct Node {
 };
 
 struct Function *parse(struct Token *tok);
+
+// type.c
+
+enum TypeKind {
+    TY_INT,
+    TY_PTR,
+};
+
+struct Type {
+    enum TypeKind kind;
+    struct Type *base;
+};
+
+extern struct Type *ty_int;
+bool is_integer(struct Type *ty);
+void add_type(struct Node *node);
 
 // codegen.c
 
