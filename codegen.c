@@ -3,8 +3,9 @@
 
 #include "luan.h"
 
-// code generator
 static int depth;
+
+static void gen_expr(struct Node *node);
 
 static int count(void) {
     // FIXME: this isn't safe
@@ -29,9 +30,15 @@ static int align_to(int n, int align) {
 }
 
 static void gen_addr(struct Node *node) {
-    if (node->kind == ND_VAR) {
-        printf("  addi a0, fp, %d\n", node->var->offset);
-        return;
+    switch (node->kind) {
+        case ND_VAR:
+            printf("  addi a0, fp, %d\n", node->var->offset);
+            return;
+        case ND_DEREF:
+            gen_expr(node->lhs);
+            return;
+        default:
+            break;
     }
     error_tok(node->token, "Not an lvalue");
 }
@@ -48,6 +55,13 @@ static void gen_expr(struct Node *node) {
         case ND_VAR:
             gen_addr(node);
             printf("  ld a0, 0(a0)\n");
+            return;
+        case ND_DEREF:
+            gen_expr(node->lhs);
+            printf("  ld a0, 0(a0)\n");
+            return;
+        case ND_ADDR:
+            gen_addr(node->lhs);
             return;
         case ND_ASSIGN:
             gen_addr(node->lhs);

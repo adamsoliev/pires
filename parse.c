@@ -262,7 +262,7 @@ static struct Node *mul(struct Token **rest, struct Token *token) {
     }
 };
 
-// unary = ("+" | "-")? unary
+// unary = ("+" | "-" | "*" | "&") unary
 //       | primary
 static struct Node *unary(struct Token **rest, struct Token *token) {
     if (equal(token, "+")) {
@@ -270,6 +270,12 @@ static struct Node *unary(struct Token **rest, struct Token *token) {
     }
     if (equal(token, "-")) {
         return new_unary(ND_NEG, unary(rest, token->next), token);
+    }
+    if (equal(token, "&")) {
+        return new_unary(ND_ADDR, unary(rest, token->next), token);
+    }
+    if (equal(token, "*")) {
+        return new_unary(ND_DEREF, unary(rest, token->next), token);
     }
     return primary(rest, token);
 }
