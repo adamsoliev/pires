@@ -66,9 +66,7 @@ static bool is_ident1(char c) {
     return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
-static bool is_ident2(char c) {
-    return is_ident1(c) || ('0' <= c && c <= '9');
-}
+static bool is_ident2(char c) { return is_ident1(c) || ('0' <= c && c <= '9'); }
 
 static int read_punct(char *p) {
     if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") ||
@@ -76,6 +74,25 @@ static int read_punct(char *p) {
         return 2;
     }
     return ispunct(*p) ? 1 : 0;
+}
+
+static bool is_keyword(struct Token *token) {
+    static char *kw[] = {"return", "if", "else"};
+
+    for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
+        if (equal(token, kw[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void convert_keywords(struct Token *token) {
+    for (struct Token *t = token; t->kind != TK_EOF; t = t->next) {
+        if (is_keyword(t)) {
+            t->kind = TK_KEYWORD;
+        }
+    }
 }
 
 struct Token *tokenize(char *p) {
@@ -115,5 +132,6 @@ struct Token *tokenize(char *p) {
         error_at(p, "Invalid token");
     }
     cur = cur->next = new_token(TK_EOF, p, p);
+    convert_keywords(head.next);
     return head.next;
 }

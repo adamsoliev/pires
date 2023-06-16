@@ -73,6 +73,18 @@ static struct Node *stmt(struct Token **rest, struct Token *token) {
         *rest = skip(token, ";");
         return node;
     }
+    if (equal(token, "if")) {
+        struct Node *node = new_node(ND_IF);
+        token = skip(token->next, "(");
+        node->cond = expr(&token, token);
+        token = skip(token, ")");
+        node->then = stmt(&token, token);
+        if (equal(token, "else")) {
+            node->els = stmt(&token, token->next);
+        }
+        *rest = token;
+        return node;
+    }
     if (equal(token, "{")) {
         return compound_stmt(rest, token->next);
     }

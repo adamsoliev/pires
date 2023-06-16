@@ -6,6 +6,12 @@
 // code generator
 static int depth;
 
+static int count(void) {
+    // FIXME: this isn't safe
+    static int i = 1;
+    return i++;
+}
+
 static void push(void) {
     printf("  addi sp, sp, -8\n");
     printf("  sd a0, 0(sp)\n");
@@ -95,6 +101,17 @@ static void gen_expr(struct Node *node) {
 
 static void get_stmt(struct Node *node) {
     switch (node->kind) {
+        case ND_IF: {
+            int c = count();
+            gen_expr(node->cond);
+            printf("  beqz a0, .L.else.%d\n", c);
+            get_stmt(node->then);
+            printf("  j .L.end.%d\n", c);
+            printf(".L.else.%d:\n", c);
+            if (node->els) get_stmt(node->els);
+            printf(".L.end.%d:\n", c);
+            return;
+        }
         case ND_BLOCK:
             for (struct Node *n = node->body; n; n = n->next) {
                 get_stmt(n);
@@ -131,7 +148,7 @@ void codegen(struct Function *prog) {
     printf("  addi sp, sp, -8\n");
     printf("  sd fp, 0(sp)\n");
     printf("  mv fp, sp\n");
-    printf("  addi sp, sp, -%d\n", prog->stack_size);
+    printf("  addi sp, sp, %d\n", -prog->stack_size);
 
     get_stmt(prog->body);
     assert(depth == 0);
