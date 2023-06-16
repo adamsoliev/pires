@@ -44,6 +44,8 @@ struct Obj {
 };
 
 struct Function {
+    struct Function *next;
+    char *name;
     struct Node *body;
     struct Obj *locals;
     int stack_size;
@@ -101,17 +103,21 @@ struct Function *parse(struct Token *tok);
 enum TypeKind {
     TY_INT,
     TY_PTR,
+    TY_FUNC,
 };
 
 struct Type {
     enum TypeKind kind;
     struct Type *base;
     struct Token *name;
+    struct Type *return_ty;
 };
 
 extern struct Type *ty_int;
+
 bool is_integer(struct Type *ty);
 struct Type *pointer_to(struct Type *base);
+struct Type *func_type(struct Type *return_ty);
 void add_type(struct Node *node);
 
 // codegen.c

@@ -5,6 +5,7 @@
 
 static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};
+static struct Function *current_fn;
 
 static void gen_expr(struct Node *node);
 
@@ -161,7 +162,7 @@ static void gen_stmt(struct Node *node) {
             return;
         case ND_RETURN:
             gen_expr(node->lhs);
-            printf("   j .L.return\n");
+            printf("   j .L.return.%s\n", current_fn->name);
             return;
         case ND_EXPR_STMT:
             gen_expr(node->lhs);
@@ -173,33 +174,38 @@ static void gen_stmt(struct Node *node) {
 };
 
 static void assign_lvar_offsets(struct Function *prog) {
-    int offset = 0;
-    for (struct Obj *var = prog->locals; var; var = var->next) {
-        offset += 8;
-        var->offset = -offset;
+    for (struct Function *fn = prog; fn; fn = fn->next) {
+        int offset = 0;
+        for (struct Obj *var = fn->locals; var; var = var->next) {
+            offset += 8;
+            var->offset = -offset;
+        }
+        fn->stack_size = align_to(offset, 16);
     }
-    prog->stack_size = align_to(offset, 16);
 }
 
 void codegen(struct Function *prog) {
     assign_lvar_offsets(prog);
-    printf("  .globl main\n");
-    printf("main:\n");
+    for (struct Function *fn = prog; fn; fn = fn->next) {
+        printf("  .globl %s\n", fn->name);
+        printf("%s:\n", fn->name);
+        current_fn = fn;
 
-    printf("  addi sp, sp, -16\n");
-    printf("  sd ra, 8(sp)\n");
-    printf("  sd fp, 0(sp)\n");
-    printf("  mv fp, sp\n");
-    printf("  addi sp, sp, %d\n", -prog->stack_size);
+        printf("  addi sp, sp, -16\n");
+        printf("  sd ra, 8(sp)\n");
+        printf("  sd fp, 0(sp)\n");
+        printf("  mv fp, sp\n");
+        printf("  addi sp, sp, %d\n", -fn->stack_size);
 
-    gen_stmt(prog->body);
-    assert(depth == 0);
+        gen_stmt(fn->body);
+        assert(depth == 0);
 
-    printf(".L.return:\n");
-    printf("  mv sp, fp\n");
-    printf("  ld fp, 0(sp)\n");
-    printf("  ld ra, 8(sp)\n");
-    printf("  addi sp, sp, 16\n");
+        printf(".L.return.%s:\n", fn->name);
+        printf("  mv sp, fp\n");
+        printf("  ld fp, 0(sp)\n");
+        printf("  ld ra, 8(sp)\n");
+        printf("  addi sp, sp, 16\n");
 
-    printf("  ret\n");
+        printf("  ret\n");
+    }
 }

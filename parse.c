@@ -1,6 +1,9 @@
 
 #include "luan.h"
 
+static struct Type *declspec(struct Token **rest, struct Token *tok);
+static struct Type *declarator(struct Token **rest, struct Token *tok,
+                               struct Type *ty);
 static struct Node *declaration(struct Token **rest, struct Token *tok);
 static struct Node *compound_stmt(struct Token **rest, struct Token *tok);
 static struct Node *stmt(struct Token **rest, struct Token *tok);
@@ -82,7 +85,18 @@ static struct Type *declspec(struct Token **rest, struct Token *token) {
     return ty_int;
 }
 
-// declarator = "*"* ident
+// type-suffix = ("(" func-params)?
+static struct Type *type_suffix(struct Token **rest, struct Token *token,
+                                struct Type *ty) {
+    if (equal(token, "(")) {
+        *rest = skip(token->next, ")");
+        return func_type(ty);
+    }
+    *rest = token;
+    return ty;
+}
+
+// declarator = "*"* ident type-suffix
 static struct Type *declarator(struct Token **rest, struct Token *token,
                                struct Type *ty) {
     while (consume(&token, token, "*")) {
@@ -91,8 +105,8 @@ static struct Type *declarator(struct Token **rest, struct Token *token,
     if (token->kind != TK_IDENT) {
         error_tok(token, "Expected a variable name");
     }
+    ty = type_suffix(rest, token->next, ty);
     ty->name = token;
-    *rest = token->next;
     return ty;
 }
 
@@ -457,12 +471,26 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
     return NULL;
 };
 
-// program = stmt*
-struct Function *parse(struct Token *token) {
-    token = skip(token, "{");
+static struct Function *function(struct Token **rest, struct Token *token) {
+    struct Type *ty = declspec(&token, token);
+    ty = declarator(&token, token, ty);
 
-    struct Function *prog = calloc(1, sizeof(struct Function));
-    prog->body = compound_stmt(&token, token);
-    prog->locals = locals;
-    return prog;
+    locals = NULL;
+
+    struct Function *fn = calloc(1, sizeof(struct Function));
+    fn->name = get_ident(ty->name);
+    token = skip(token, "{");
+    fn->body = compound_stmt(rest, token);
+    fn->locals = locals;
+    return fn;
+}
+
+// program = function-definition*
+struct Function *parse(struct Token *token) {
+    struct Function head = {};
+    struct Function *cur = &head;
+    while (token->kind != TK_EOF) {
+        cur = cur->next = function(&token, token);
+    }
+    return head.next;
 };

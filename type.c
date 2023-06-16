@@ -11,6 +11,13 @@ struct Type *pointer_to(struct Type *base) {
     return ty;
 }
 
+struct Type *func_type(struct Type *return_ty) {
+    struct Type *ty = calloc(1, sizeof(struct Type));
+    ty->kind = TY_FUNC;
+    ty->return_ty = return_ty;
+    return ty;
+}
+
 void add_type(struct Node *node) {
     if (!node || node->ty) return;
 
