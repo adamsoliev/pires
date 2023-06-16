@@ -401,8 +401,30 @@ static struct Node *unary(struct Token **rest, struct Token *token) {
     return primary(rest, token);
 }
 
-// primary = "(" expr ")" | ident args? | num
-// args = "(" ")"
+// funccall = ident "(" (assign ("," assign)*)? ")"
+static struct Node *funcall(struct Token **rest, struct Token *token) {
+    struct Token *start = token;
+    token = token->next->next;
+
+    struct Node head = {};
+    struct Node *cur = &head;
+
+    while (!equal(token, ")")) {
+        if (cur != &head) {
+            token = skip(token, ",");
+        }
+        cur = cur->next = assign(&token, token);
+    }
+
+    *rest = skip(token, ")");
+
+    struct Node *node = new_node(ND_FUNCALL, start);
+    node->funcname = strndup(start->loc, start->len);
+    node->args = head.next;
+    return node;
+}
+
+// primary = "(" expr ")" | ident func-args? | num
 static struct Node *primary(struct Token **rest, struct Token *token) {
     if (equal(token, "(")) {
         struct Node *node = expr(&token, token->next);
@@ -413,10 +435,7 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
     if (token->kind == TK_IDENT) {
         // Function call
         if (equal(token->next, "(")) {
-            struct Node *node = new_node(ND_FUNCALL, token);
-            node->funcname = strndup(token->loc, token->len);
-            *rest = skip(token->next->next, ")");
-            return node;
+            return funcall(rest, token);
         }
 
         // Variable

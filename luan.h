@@ -84,6 +84,7 @@ struct Node {
     struct Node *body;  // ND_BLOCK
 
     char *funcname;     // Function call
+    struct Node *args;  // Function call
 
     // "if" or "for" statement
     struct Node *cond;
