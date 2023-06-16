@@ -33,7 +33,7 @@ static void gen_addr(struct Node *node) {
         printf("  addi a0, fp, %d\n", node->var->offset);
         return;
     }
-    error("Not an lvalue");
+    error_tok(node->token, "Not an lvalue");
 }
 
 static void gen_expr(struct Node *node) {
@@ -96,7 +96,7 @@ static void gen_expr(struct Node *node) {
         default:
             break;
     }
-    error("Invalid expression");
+    error_tok(node->token, "Invalid expression");
 };
 
 static void gen_stmt(struct Node *node) {
@@ -141,7 +141,7 @@ static void gen_stmt(struct Node *node) {
         default:
             break;
     }
-    error("Invalid statement");
+    error_tok(node->token, "Invalid statement");
 };
 
 static void assign_lvar_offsets(struct Function *prog) {

@@ -24,28 +24,29 @@ static struct Obj *find_var(struct Token *token) {
     return NULL;
 }
 
-static struct Node *new_node(enum NodeKind kind) {
+static struct Node *new_node(enum NodeKind kind, struct Token *token) {
     struct Node *node = calloc(1, sizeof(struct Node));
     node->kind = kind;
+    node->token = token;
     return node;
 };
 
 static struct Node *new_binary(enum NodeKind kind, struct Node *lhs,
-                               struct Node *rhs) {
-    struct Node *node = new_node(kind);
+                               struct Node *rhs, struct Token *token) {
+    struct Node *node = new_node(kind, token);
     node->lhs = lhs;
     node->rhs = rhs;
     return node;
 };
 
-static struct Node *new_num(int val) {
-    struct Node *node = new_node(ND_NUM);
+static struct Node *new_num(int val, struct Token *token) {
+    struct Node *node = new_node(ND_NUM, token);
     node->val = val;
     return node;
 };
 
-static struct Node *new_var_node(struct Obj *var) {
-    struct Node *node = new_node(ND_VAR);
+static struct Node *new_var_node(struct Obj *var, struct Token *token) {
+    struct Node *node = new_node(ND_VAR, token);
     node->var = var;
     return node;
 };
@@ -58,8 +59,9 @@ static struct Obj *new_lvar(char *name) {
     return var;
 }
 
-static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
-    struct Node *node = new_node(kind);
+static struct Node *new_unary(enum NodeKind kind, struct Node *expr,
+                              struct Token *token) {
+    struct Node *node = new_node(kind, token);
     node->lhs = expr;
     return node;
 };
@@ -72,12 +74,13 @@ static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
 //      | expr-stmt
 static struct Node *stmt(struct Token **rest, struct Token *token) {
     if (equal(token, "return")) {
-        struct Node *node = new_unary(ND_RETURN, expr(&token, token->next));
+        struct Node *node = new_node(ND_RETURN, token);
+        node->lhs = expr(&token, token->next);
         *rest = skip(token, ";");
         return node;
     }
     if (equal(token, "if")) {
-        struct Node *node = new_node(ND_IF);
+        struct Node *node = new_node(ND_IF, token);
         token = skip(token->next, "(");
         node->cond = expr(&token, token);
         token = skip(token, ")");
@@ -89,7 +92,7 @@ static struct Node *stmt(struct Token **rest, struct Token *token) {
         return node;
     }
     if (equal(token, "for")) {
-        struct Node *node = new_node(ND_FOR);
+        struct Node *node = new_node(ND_FOR, token);
         token = skip(token->next, "(");
 
         node->init = expr_stmt(&token, token);
@@ -108,7 +111,7 @@ static struct Node *stmt(struct Token **rest, struct Token *token) {
         return node;
     }
     if (equal(token, "while")) {
-        struct Node *node = new_node(ND_FOR);
+        struct Node *node = new_node(ND_FOR, token);
         token = skip(token->next, "(");
         node->cond = expr(&token, token);
         token = skip(token, ")");
@@ -123,13 +126,14 @@ static struct Node *stmt(struct Token **rest, struct Token *token) {
 
 // compound-stmt =  stmt* "}"
 static struct Node *compound_stmt(struct Token **rest, struct Token *token) {
+    struct Node *node = new_node(ND_BLOCK, token);
+
     struct Node head = {};
     struct Node *cur = &head;
 
     while (!equal(token, "}")) {
         cur = cur->next = stmt(&token, token);
     }
-    struct Node *node = new_node(ND_BLOCK);
     node->body = head.next;
     *rest = token->next;
     return node;
@@ -139,10 +143,11 @@ static struct Node *compound_stmt(struct Token **rest, struct Token *token) {
 static struct Node *expr_stmt(struct Token **rest, struct Token *token) {
     if (equal(token, ";")) {
         *rest = token->next;
-        return new_node(ND_BLOCK);
+        return new_node(ND_BLOCK, token);
     }
 
-    struct Node *node = new_unary(ND_EXPR_STMT, expr(&token, token));
+    struct Node *node = new_node(ND_EXPR_STMT, token);
+    node->lhs = expr(&token, token);
     *rest = skip(token, ";");
     return node;
 };
@@ -156,7 +161,7 @@ static struct Node *expr(struct Token **rest, struct Token *token) {
 static struct Node *assign(struct Token **rest, struct Token *token) {
     struct Node *node = equality(&token, token);
     if (equal(token, "=")) {
-        node = new_binary(ND_ASSIGN, node, assign(&token, token->next));
+        return new_binary(ND_ASSIGN, node, assign(rest, token->next), token);
     }
     *rest = token;
     return node;
@@ -167,13 +172,17 @@ static struct Node *equality(struct Token **rest, struct Token *token) {
     struct Node *node = relational(&token, token);
 
     for (;;) {
+        struct Token *start = token;
+
         if (equal(token, "==")) {
-            node = new_binary(ND_EQ, node, relational(&token, token->next));
+            node =
+                new_binary(ND_EQ, node, relational(&token, token->next), start);
             continue;
         }
 
         if (equal(token, "!=")) {
-            node = new_binary(ND_NE, node, relational(&token, token->next));
+            node =
+                new_binary(ND_NE, node, relational(&token, token->next), start);
             continue;
         }
         *rest = token;
@@ -186,23 +195,24 @@ static struct Node *relational(struct Token **rest, struct Token *token) {
     struct Node *node = add(&token, token);
 
     for (;;) {
+        struct Token *start = token;
         if (equal(token, "<")) {
-            node = new_binary(ND_LT, node, add(&token, token->next));
+            node = new_binary(ND_LT, node, add(&token, token->next), start);
             continue;
         }
 
         if (equal(token, "<=")) {
-            node = new_binary(ND_LE, node, add(&token, token->next));
+            node = new_binary(ND_LE, node, add(&token, token->next), start);
             continue;
         }
 
         if (equal(token, ">")) {
-            node = new_binary(ND_LT, add(&token, token->next), node);
+            node = new_binary(ND_LT, add(&token, token->next), node, start);
             continue;
         }
 
         if (equal(token, ">=")) {
-            node = new_binary(ND_LE, add(&token, token->next), node);
+            node = new_binary(ND_LE, add(&token, token->next), node, start);
             continue;
         }
 
@@ -216,13 +226,14 @@ static struct Node *add(struct Token **rest, struct Token *token) {
     struct Node *node = mul(&token, token);
 
     for (;;) {
+        struct Token *start = token;
         if (equal(token, "+")) {
-            node = new_binary(ND_ADD, node, mul(&token, token->next));
+            node = new_binary(ND_ADD, node, mul(&token, token->next), start);
             continue;
         }
 
         if (equal(token, "-")) {
-            node = new_binary(ND_SUB, node, mul(&token, token->next));
+            node = new_binary(ND_SUB, node, mul(&token, token->next), start);
             continue;
         }
 
@@ -235,13 +246,14 @@ static struct Node *add(struct Token **rest, struct Token *token) {
 static struct Node *mul(struct Token **rest, struct Token *token) {
     struct Node *node = unary(&token, token);
     for (;;) {
+        struct Token *start = token;
         if (equal(token, "*")) {
-            node = new_binary(ND_MUL, node, unary(&token, token->next));
+            node = new_binary(ND_MUL, node, unary(&token, token->next), start);
             continue;
         }
 
         if (equal(token, "/")) {
-            node = new_binary(ND_DIV, node, unary(&token, token->next));
+            node = new_binary(ND_DIV, node, unary(&token, token->next), start);
             continue;
         }
 
@@ -257,7 +269,7 @@ static struct Node *unary(struct Token **rest, struct Token *token) {
         return unary(rest, token->next);
     }
     if (equal(token, "-")) {
-        return new_unary(ND_NEG, unary(rest, token->next));
+        return new_unary(ND_NEG, unary(rest, token->next), token);
     }
     return primary(rest, token);
 }
@@ -276,11 +288,11 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
             var = new_lvar(strndup(token->loc, token->len));
         }
         *rest = token->next;
-        return new_var_node(var);
+        return new_var_node(var, token);
     }
 
     if (token->kind == TK_NUM) {
-        struct Node *node = new_num(token->val);
+        struct Node *node = new_num(token->val, token);
         *rest = token->next;
         return node;
     }

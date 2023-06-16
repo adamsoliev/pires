@@ -70,6 +70,7 @@ enum NodeKind {
 struct Node {
     enum NodeKind kind;
     struct Node *next;
+    struct Token *token;
     struct Node *lhs;
     struct Node *rhs;
     struct Obj *var;    // Used if kind == ND_VAR
