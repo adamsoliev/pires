@@ -99,22 +99,36 @@ static void gen_expr(struct Node *node) {
     error("Invalid expression");
 };
 
-static void get_stmt(struct Node *node) {
+static void gen_stmt(struct Node *node) {
     switch (node->kind) {
         case ND_IF: {
             int c = count();
             gen_expr(node->cond);
             printf("  beqz a0, .L.else.%d\n", c);
-            get_stmt(node->then);
+            gen_stmt(node->then);
             printf("  j .L.end.%d\n", c);
             printf(".L.else.%d:\n", c);
-            if (node->els) get_stmt(node->els);
+            if (node->els) gen_stmt(node->els);
+            printf(".L.end.%d:\n", c);
+            return;
+        }
+        case ND_FOR: {
+            int c = count();
+            gen_stmt(node->init);
+            printf(".L.begin.%d:\n", c);
+            if (node->cond) {
+                gen_expr(node->cond);
+                printf("  beqz a0, .L.end.%d\n", c);
+            }
+            gen_stmt(node->then);
+            if (node->inc) gen_expr(node->inc);
+            printf("  j .L.begin.%d\n", c);
             printf(".L.end.%d:\n", c);
             return;
         }
         case ND_BLOCK:
             for (struct Node *n = node->body; n; n = n->next) {
-                get_stmt(n);
+                gen_stmt(n);
             }
             return;
         case ND_RETURN:
@@ -141,7 +155,6 @@ static void assign_lvar_offsets(struct Function *prog) {
 
 void codegen(struct Function *prog) {
     assign_lvar_offsets(prog);
-
     printf("  .globl main\n");
     printf("main:\n");
 
@@ -150,7 +163,7 @@ void codegen(struct Function *prog) {
     printf("  mv fp, sp\n");
     printf("  addi sp, sp, %d\n", -prog->stack_size);
 
-    get_stmt(prog->body);
+    gen_stmt(prog->body);
     assert(depth == 0);
 
     printf(".L.return:\n");

@@ -65,7 +65,9 @@ static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
 };
 
 // stmt = "return" expr ";"
-//      | "{" compound-stmt* "}"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "for" "(" expr-stmt expr? ";" expr? ")" stmt
+//      | "{" compound-stmt
 //      | expr-stmt
 static struct Node *stmt(struct Token **rest, struct Token *token) {
     if (equal(token, "return")) {
@@ -83,6 +85,25 @@ static struct Node *stmt(struct Token **rest, struct Token *token) {
             node->els = stmt(&token, token->next);
         }
         *rest = token;
+        return node;
+    }
+    if (equal(token, "for")) {
+        struct Node *node = new_node(ND_FOR);
+        token = skip(token->next, "(");
+
+        node->init = expr_stmt(&token, token);
+
+        if (!equal(token, ";")) {
+            node->cond = expr(&token, token);
+        }
+        token = skip(token, ";");
+
+        if (!equal(token, ")")) {
+            node->inc = expr(&token, token);
+        }
+        token = skip(token, ")");
+
+        node->then = stmt(rest, token);
         return node;
     }
     if (equal(token, "{")) {

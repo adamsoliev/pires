@@ -60,6 +60,7 @@ enum NodeKind {
     ND_ASSIGN,     // =
     ND_RETURN,     // "return"
     ND_IF,         // "if"
+    ND_FOR,        // "for"
     ND_BLOCK,      // { ... }
     ND_EXPR_STMT,  // Expression statement
     ND_VAR,        // Variable
@@ -75,10 +76,12 @@ struct Node {
     int val;            // Used if kind == ND_NUM
     struct Node *body;  // ND_BLOCK
 
-    // "if" cond
+    // "if" or "for" statement
     struct Node *cond;
     struct Node *then;
     struct Node *els;
+    struct Node *init;
+    struct Node *inc;
 };
 
 struct Function *parse(struct Token *tok);
