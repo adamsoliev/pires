@@ -13,6 +13,7 @@
 enum TokenKind {
     TK_IDENT,
     TK_PUNCT,
+    TK_KEYWORD,
     TK_NUM,
     TK_EOF,
 };
@@ -57,6 +58,7 @@ enum NodeKind {
     ND_LT,         // <
     ND_LE,         // <=
     ND_ASSIGN,     // =
+    ND_RETURN,     // "return"
     ND_EXPR_STMT,  // Expression statement
     ND_VAR,        // Variable
     ND_NUM,

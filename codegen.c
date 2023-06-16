@@ -94,9 +94,16 @@ static void gen_expr(struct Node *node) {
 };
 
 static void get_stmt(struct Node *node) {
-    if (node->kind == ND_EXPR_STMT) {
-        gen_expr(node->lhs);
-        return;
+    switch (node->kind) {
+        case ND_RETURN:
+            gen_expr(node->lhs);
+            printf("   j .L.return\n");
+            return;
+        case ND_EXPR_STMT:
+            gen_expr(node->lhs);
+            return;
+        default:
+            break;
     }
     error("Invalid statement");
 };
@@ -125,6 +132,8 @@ void codegen(struct Function *prog) {
         get_stmt(n);
         assert(depth == 0);
     }
+
+    printf(".L.return:\n");
     printf("  mv sp, fp\n");
     printf("  ld fp, 0(sp)\n");
     printf("  addi sp, sp, 8\n");

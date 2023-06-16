@@ -63,8 +63,14 @@ static struct Node *new_unary(enum NodeKind kind, struct Node *expr) {
     return node;
 };
 
-// stmt = expr-stmt
+// stmt = "return" expr ";"
+//      | expr-stmt
 static struct Node *stmt(struct Token **rest, struct Token *token) {
+    if (equal(token, "return")) {
+        struct Node *node = new_unary(ND_RETURN, expr(&token, token->next));
+        *rest = skip(token, ";");
+        return node;
+    }
     return expr_stmt(rest, token);
 };
 
