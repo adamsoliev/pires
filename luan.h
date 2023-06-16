@@ -66,6 +66,7 @@ enum NodeKind {
     ND_IF,         // "if"
     ND_FOR,        // "for" or "while"
     ND_BLOCK,      // { ... }
+    ND_FUNCALL,    // Function call
     ND_EXPR_STMT,  // Expression statement
     ND_VAR,        // Variable
     ND_NUM,
@@ -81,6 +82,8 @@ struct Node {
     struct Obj *var;    // Used if kind == ND_VAR
     int val;            // Used if kind == ND_NUM
     struct Node *body;  // ND_BLOCK
+
+    char *funcname;     // Function call
 
     // "if" or "for" statement
     struct Node *cond;

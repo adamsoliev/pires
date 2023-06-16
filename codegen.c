@@ -70,6 +70,9 @@ static void gen_expr(struct Node *node) {
             pop("a1");
             printf("  sd a0, 0(a1)\n");
             return;
+        case ND_FUNCALL:
+            printf("   call %s\n", node->funcname);
+            return;
         default:
             break;
     }
@@ -172,7 +175,8 @@ void codegen(struct Function *prog) {
     printf("  .globl main\n");
     printf("main:\n");
 
-    printf("  addi sp, sp, -8\n");
+    printf("  addi sp, sp, -16\n");
+    printf("  sd ra, 8(sp)\n");
     printf("  sd fp, 0(sp)\n");
     printf("  mv fp, sp\n");
     printf("  addi sp, sp, %d\n", -prog->stack_size);
@@ -183,7 +187,8 @@ void codegen(struct Function *prog) {
     printf(".L.return:\n");
     printf("  mv sp, fp\n");
     printf("  ld fp, 0(sp)\n");
-    printf("  addi sp, sp, 8\n");
+    printf("  ld ra, 8(sp)\n");
+    printf("  addi sp, sp, 16\n");
 
     printf("  ret\n");
 }
