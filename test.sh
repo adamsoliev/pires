@@ -59,5 +59,6 @@ assert 10 "{ foo123=3; bar=5; fizz=2; return foo123+bar+fizz; }"
 assert 1 "{ return 1; 2; 3;}"
 assert 2 "{ 1; return 2; 3; }"
 assert 3 "{ {1; {2;} return 3;} }"
+assert 5 "{ ;;; return 5; }"
 
 echo OK

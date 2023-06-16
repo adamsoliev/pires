@@ -93,8 +93,13 @@ static struct Node *compound_stmt(struct Token **rest, struct Token *token) {
     return node;
 }
 
-// expr-stmt = expr ";"
+// expr-stmt = expr? ";"
 static struct Node *expr_stmt(struct Token **rest, struct Token *token) {
+    if (equal(token, ";")) {
+        *rest = token->next;
+        return new_node(ND_BLOCK);
+    }
+
     struct Node *node = new_unary(ND_EXPR_STMT, expr(&token, token));
     *rest = skip(token, ";");
     return node;
