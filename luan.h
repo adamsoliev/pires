@@ -49,6 +49,8 @@ struct Function {
     struct Node *body;
     struct Obj *locals;
     int stack_size;
+
+    struct Obj *params;
 };
 
 enum NodeKind {
@@ -111,11 +113,14 @@ struct Type {
     struct Type *base;
     struct Token *name;
     struct Type *return_ty;
+    struct Type *params;
+    struct Type *next;
 };
 
 extern struct Type *ty_int;
 
 bool is_integer(struct Type *ty);
+struct Type *copy_type(struct Type *ty);
 struct Type *pointer_to(struct Type *base);
 struct Type *func_type(struct Type *return_ty);
 void add_type(struct Node *node);

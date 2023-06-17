@@ -85,12 +85,29 @@ static struct Type *declspec(struct Token **rest, struct Token *token) {
     return ty_int;
 }
 
-// type-suffix = ("(" func-params)?
+// type-suffix  = ("(" func-params)? ")")?
+// func-params  = param ("," param)*
+// param        = declspec declarator
 static struct Type *type_suffix(struct Token **rest, struct Token *token,
                                 struct Type *ty) {
     if (equal(token, "(")) {
-        *rest = skip(token->next, ")");
-        return func_type(ty);
+        token = token->next;
+
+        struct Type head = {};
+        struct Type *cur = &head;
+
+        while (!equal(token, ")")) {
+            if (cur != &head) {
+                token = skip(token, ",");
+            }
+            struct Type *basety = declspec(&token, token);
+            struct Type *ty = declarator(&token, token, basety);
+            cur = cur->next = copy_type(ty);
+        }
+        ty = func_type(ty);
+        ty->params = head.next;
+        *rest = token->next;
+        return ty;
     }
     *rest = token;
     return ty;
@@ -471,6 +488,13 @@ static struct Node *primary(struct Token **rest, struct Token *token) {
     return NULL;
 };
 
+static void create_param_lvars(struct Type *param) {
+    if (param) {
+        create_param_lvars(param->next);
+        new_lvar(get_ident(param->name), param);
+    }
+}
+
 static struct Function *function(struct Token **rest, struct Token *token) {
     struct Type *ty = declspec(&token, token);
     ty = declarator(&token, token, ty);
@@ -479,6 +503,9 @@ static struct Function *function(struct Token **rest, struct Token *token) {
 
     struct Function *fn = calloc(1, sizeof(struct Function));
     fn->name = get_ident(ty->name);
+    create_param_lvars(ty->params);
+    fn->params = locals;
+
     token = skip(token, "{");
     fn->body = compound_stmt(rest, token);
     fn->locals = locals;
