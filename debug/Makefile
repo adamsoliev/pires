@@ -1,7 +1,7 @@
 # Makefile for building, running and debugging assembly code on qemu-riscv64
 
 # Define the name of your assembly file (without the .s extension)
-ASSEMBLY_FILE = hello_world
+ASSEMBLY_FILE = func_simple
 
 TARGET = $(ASSEMBLY_FILE)
 
@@ -9,7 +9,6 @@ QEMU = qemu-riscv64
 
 CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -march=rv64imafdc -mabi=lp64d
-
 
 all: $(TARGET)
 
@@ -22,6 +21,9 @@ run: $(TARGET)
 debug: $(TARGET)
 	$(QEMU) -L /opt/riscv/sysroot -g 1234 -S ./$< &
 	riscv64-unknown-linux-gnu-gdb -ex "target remote:1234" $<
+
+disassemble: $(TARGET)
+	riscv64-unknown-linux-gnu-gdb -batch -ex 'disassemble main' $< 
 
 clean:
 	rm -f $(TARGET)
