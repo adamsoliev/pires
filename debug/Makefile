@@ -1,7 +1,7 @@
 # Makefile for building, running and debugging assembly code on qemu-riscv64
 
 # Define the name of your assembly file (without the .s extension)
-ASSEMBLY_FILE = print_simple
+ASSEMBLY_FILE = print_ex2
 
 TARGET = $(ASSEMBLY_FILE)
 
