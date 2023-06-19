@@ -4,45 +4,52 @@ Pires is a C compiler that hopes to implement most C99 features.
 
 ## Features roadmap
 
-- Data Types:
+- Primitive data types: ~~int~~, char, float, double, etc.
+- Derived data types: arrays, structures, unions, enumerations, and pointers.
+- User-defined data types using typedef.
 
-  - Primitive data types: int, float, char, double, etc.
-  - Derived data types: arrays, structures, unions, enumerations, and pointers.
-  - User-defined data types using typedef.
+---
 
-- Control Flow:
+- Conditional statements: if-else, switch-case.
+- Looping constructs: for, while, do-while.
 
-  - Conditional statements: if-else, switch-case.
-  - Looping constructs: for, while, do-while.
+---
 
-- Functions:
+- Function declaration and definition.
+- Parameter passing: pass by value, pass by reference.
+- Return types: void, int, etc.
+- Recursive functions.
 
-  - Function declaration and definition.
-  - Parameter passing: pass by value, pass by reference.
-  - Return types: void, int, etc.
-  - Recursive functions.
+---
 
-- Operators:
+- ~~Variable declaration and initialization~~
+- Global vs ~~local~~ vs static variables
+- Constant variables (const)
+- Automatic variables (auto)
 
-  - Arithmetic operators: +, -, \_, /, %.
-  - Relational operators: <, >, <=, >=, ==, !=.
-  - Logical operators: &&, ||, !.
-  - Bitwise operators: &, |, ^, <<, >>.
-  - Assignment operators: =, +=, -=, \_=, /=, %=, etc.
+---
 
-- Input and Output:
+- Arithmetic operators: ~~+, -~~, \*, /, %.
+- Relational operators: <, >, <=, >=, ==, !=.
+- Logical operators: &&, ||, !.
+- Bitwise operators: &, |, ^, <<, >>.
+- Assignment operators: =, +=, -=, \_=, /=, %=, etc.
 
-  - Standard input/output functions: printf, scanf, etc.
-  - File input/output: fopen, fclose, fread, fwrite, etc.
+---
 
-- Memory Management:
+- Standard input/output functions: printf, scanf, etc.
+- File input/output: fopen, fclose, fread, fwrite, etc.
 
-  - Dynamic memory allocation: malloc, calloc, realloc, free.
+---
 
-- Preprocessor Directives:
+- Dynamic memory allocation: malloc, calloc, realloc, free.
 
-  - Macros: #define, #ifdef, #ifndef, #endif, etc.
-  - Include files: #include.
+---
+
+- Macros: #define, #ifdef, #ifndef, #endif, etc.
+- Include files: #include.
+
+---
 
 ## Internals
 
@@ -53,3 +60,11 @@ Pires is a C compiler that hopes to implement most C99 features.
 References
 
 - [chibicc](https://github.com/rui314/chibicc)
+- [tcc](https://bellard.org/tcc)
+- [lcc](https://github.com/drh/lcc)
+- [c](https://github.com/andrewchambers/c)
+- [lacc](https://github.com/larmel/lacc)
+- [scc](http://www.simple-cc.org/)
+- [acwj](https://github.com/DoctorWkt/acwj)
+- [gcc](https://github.com/gcc-mirror/gcc)
+- [llvm](https://github.com/llvm/llvm-project)
