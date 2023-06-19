@@ -17,7 +17,7 @@ Pires is a C compiler that implements most C99 features and is targeted at RISC-
 
 - ~~Function declaration and definition.~~
 - Parameter passing: pass by value, pass by reference.
-- Return types: void, int, etc.
+- Return types: void, ~~int~~, etc.
 - Recursive functions.
 
 ---
@@ -63,6 +63,40 @@ Pires is a C compiler that implements most C99 features and is targeted at RISC-
 $ git clone https://github.com/adamsoliev/pires
 $ cd pires
 $ make
+```
+
+`Pires` comes with tests. To run them, do:
+
+```bash
+$ make test
+```
+
+## Example
+
+```bash
+$ ./pires "int main() { int a = 23; int b = 32; return a + b; }"
+```
+
+Outputs
+
+```
+  .globl main
+main:
+  addi sp, sp, -32
+  sd s0, 24(sp)
+  addi s0, sp, 32
+  li a5, 23
+  sw a5, -16(s0)
+  li a5, 32
+  sw a5, -12(s0)
+  ld a5, -12(s0)
+  mv a0, a5
+  ld a5, -16(s0)
+  add a5, a5, a0
+  mv a0,a5
+  ld s0,24(sp)
+  addi sp, sp, 32
+  jr ra
 ```
 
 ## References
