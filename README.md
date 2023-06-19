@@ -1,6 +1,6 @@
 ![Pires Logo](./img/pires_compiler.png)
 
-Pires is a C compiler that hopes to implement most C99 features.
+Pires is a C compiler that implements most C99 features and is targeted at RISC-V architecture (RV64IM for now).
 
 ## Features roadmap
 
@@ -56,6 +56,12 @@ Pires is a C compiler that hopes to implement most C99 features.
 - Tokenize: A tokenizer takes in a string and outputs a list of tokens
 - Parse: A recursive descendent parser takes in a list of tokens and constructs ASTs
 - Codegen: A code generator emits an RISC-V assembly text for given AST nodes
+
+## Build
+
+git clone https://github.com/adamsoliev/pires
+cd pires
+make
 
 References
 
