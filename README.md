@@ -65,7 +65,7 @@ $ cd pires
 $ make
 ```
 
-References
+## References
 
 - [chibicc](https://github.com/rui314/chibicc)
 - [tcc](https://bellard.org/tcc)
