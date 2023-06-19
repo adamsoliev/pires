@@ -34,7 +34,8 @@ static int align_to(int n, int align) {
 static void gen_addr(struct Node *node) {
     switch (node->kind) {
         case ND_VAR:
-            printf("  addi a0, fp, %d\n", node->var->offset);
+            // printf("  addi a0, fp, %d\n", node->var->offset);
+            printf("  sw a5, %d(s0)\n", node->var->offset);
             return;
         case ND_DEREF:
             gen_expr(node->lhs);
@@ -48,15 +49,15 @@ static void gen_addr(struct Node *node) {
 static void gen_expr(struct Node *node) {
     switch (node->kind) {
         case ND_NUM:
-            printf("  li a0, %d\n", node->val);
+            printf("  li a5, %d\n", node->val);
             return;
         case ND_NEG:
             gen_expr(node->lhs);
             printf("  neg a0, a0\n");
             return;
         case ND_VAR:
-            gen_addr(node);
-            printf("  ld a0, 0(a0)\n");
+            // gen_addr(node);
+            printf("  ld a5, %d(s0)\n", node->var->offset);
             return;
         case ND_DEREF:
             gen_expr(node->lhs);
@@ -66,11 +67,8 @@ static void gen_expr(struct Node *node) {
             gen_addr(node->lhs);
             return;
         case ND_ASSIGN:
-            gen_addr(node->lhs);
-            push();
             gen_expr(node->rhs);
-            pop("a1");
-            printf("  sd a0, 0(a1)\n");
+            gen_addr(node->lhs);
             return;
         case ND_FUNCALL: {
             int nargs = 0;
@@ -89,20 +87,29 @@ static void gen_expr(struct Node *node) {
             break;
     }
 
-    gen_expr(node->rhs);
-    push();
-    gen_expr(node->lhs);
-    pop("a1");
+    // gen_expr(node->rhs);
+    // push();
+    // gen_expr(node->lhs);
+    // pop("a1");
 
     switch (node->kind) {
         case ND_ADD:
-            printf("  add a0, a0, a1\n");
+            gen_expr(node->lhs);
+            printf("  mv a4, a5\n");
+            gen_expr(node->rhs);
+            printf("  add a5, a5, a4\n");
             return;
         case ND_SUB:
-            printf("  sub a0, a0, a1\n");
+            gen_expr(node->lhs);
+            printf("  mv a4, a5\n");
+            gen_expr(node->rhs);
+            printf("  sub a5, a4, a5\n");
             return;
         case ND_MUL:
-            printf("  mul a0, a0, a1\n");
+            gen_expr(node->lhs);
+            printf("  mv a4, a5\n");
+            gen_expr(node->rhs);
+            printf("  mul a5, a4, a5\n");
             return;
         case ND_DIV:
             printf("  div a0, a0, a1\n");
@@ -162,7 +169,6 @@ static void gen_stmt(struct Node *node) {
             return;
         case ND_RETURN:
             gen_expr(node->lhs);
-            printf("   j .L.return.%s\n", current_fn->name);
             return;
         case ND_EXPR_STMT:
             gen_expr(node->lhs);
@@ -175,11 +181,12 @@ static void gen_stmt(struct Node *node) {
 
 static void assign_lvar_offsets(struct Function *prog) {
     for (struct Function *fn = prog; fn; fn = fn->next) {
-        int offset = 0;
+        int offset = 8;  // caller's frame pointer
         for (struct Obj *var = fn->locals; var; var = var->next) {
-            offset += 8;
+            offset += 4;
             var->offset = -offset;
         }
+        offset += 16;
         fn->stack_size = align_to(offset, 16);
     }
 }
@@ -191,11 +198,11 @@ void codegen(struct Function *prog) {
         printf("%s:\n", fn->name);
         current_fn = fn;
 
-        printf("  addi sp, sp, -16\n");
-        printf("  sd ra, 8(sp)\n");
-        printf("  sd fp, 0(sp)\n");
-        printf("  mv fp, sp\n");
+        // prologue
         printf("  addi sp, sp, %d\n", -fn->stack_size);
+        // printf("  sd ra, 8(sp)\n");
+        printf("  sd s0, %d(sp)\n", fn->stack_size - 8);
+        printf("  addi s0, sp, %d\n", fn->stack_size);
 
         // save passed-by-register arguments to the stack
         int i = 0;
@@ -206,12 +213,11 @@ void codegen(struct Function *prog) {
         gen_stmt(fn->body);
         assert(depth == 0);
 
-        printf(".L.return.%s:\n", fn->name);
-        printf("  mv sp, fp\n");
-        printf("  ld fp, 0(sp)\n");
-        printf("  ld ra, 8(sp)\n");
-        printf("  addi sp, sp, 16\n");
-
-        printf("  ret\n");
+        // epilogue
+        printf("  mv a0,a5\n");
+        // printf("  ld ra, 8(sp)\n");
+        printf("  ld s0,%d(sp)\n", fn->stack_size - 8);
+        printf("  addi sp, sp, %d\n", fn->stack_size);
+        printf("  jr ra\n");
     }
 }
