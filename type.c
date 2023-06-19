@@ -1,4 +1,4 @@
-#include "luan.h"
+#include "pires.h"
 
 struct Type *ty_int = &(struct Type){TY_INT};
 

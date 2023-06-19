@@ -14,7 +14,7 @@ assert() {
     expected="$1"
     input="$2"
 
-    ./luan "$input" > tmp.s || exit
+    ./pires "$input" > tmp.s || exit
 
     riscv64-unknown-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
 

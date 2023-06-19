@@ -1,5 +1,4 @@
-
-#include "luan.h"
+#include "pires.h"
 
 static struct Type *declspec(struct Token **rest, struct Token *tok);
 static struct Type *declarator(struct Token **rest, struct Token *tok,

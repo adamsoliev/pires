@@ -2,15 +2,15 @@ CFLAGS=-std=c11 -g -fno-common
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 
-luan: $(OBJS)
+pires: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) 
 
-$(OBJS): luan.h
+$(OBJS): pires.h
 
-test: luan
+test: pires
 	./test.sh
 
 clean: 
-	rm -f luan *.o *~ tmp*
+	rm -f pires *.o *~ tmp*
 
 .PHONY: test clean

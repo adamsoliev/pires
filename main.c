@@ -1,4 +1,4 @@
-#include "luan.h"
+#include "pires.h"
 
 int main(int argc, char *argv[]) {
     if (argc != 2) error("%s: invalid number of arguments\n", argv[0]);

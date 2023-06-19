@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "luan.h"
+#include "pires.h"
 
 static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};

@@ -1,4 +1,4 @@
-#include "luan.h"
+#include "pires.h"
 
 static char *current_input;
 
