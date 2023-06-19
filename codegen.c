@@ -5,9 +5,24 @@
 
 static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};
+static bool free_regs[15] = {true, true, true, true, true, true, true, true,
+                             true, true, true, true, true, true, true};
+static char *free_reg_names[15] = {"a0", "a1", "a2", "a3", "a4",
+                                   "a5", "a6", "a7", "t0", "t1",
+                                   "t2", "t3", "t4", "t5", "t6"};
 static struct Function *current_fn;
 
 static void gen_expr(struct Node *node);
+
+static unsigned get_free_reg(void) {
+    for (int i = 0; i < 12; i++) {
+        if (free_regs[i]) {
+            free_regs[i] = false;
+            return i;
+        }
+    }
+    error("No available registers");
+}
 
 static int count(void) {
     // FIXME: this isn't safe
@@ -93,26 +108,38 @@ static void gen_expr(struct Node *node) {
     // pop("a1");
 
     switch (node->kind) {
+        unsigned reg;
         case ND_ADD:
-            gen_expr(node->lhs);
-            printf("  mv a4, a5\n");
             gen_expr(node->rhs);
-            printf("  add a5, a5, a4\n");
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            gen_expr(node->lhs);
+            printf("  add a5, a5, %s\n", free_reg_names[reg]);
+            free_regs[reg] = true;
             return;
         case ND_SUB:
-            gen_expr(node->lhs);
-            printf("  mv a4, a5\n");
             gen_expr(node->rhs);
-            printf("  sub a5, a4, a5\n");
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            gen_expr(node->lhs);
+            printf("  sub a5, a5, %s\n", free_reg_names[reg]);
+            free_regs[reg] = true;
             return;
         case ND_MUL:
             gen_expr(node->lhs);
-            printf("  mv a4, a5\n");
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
             gen_expr(node->rhs);
-            printf("  mul a5, a4, a5\n");
+            printf("  mul a5, %s, a5\n", free_reg_names[reg]);
+            free_regs[reg] = true;
             return;
         case ND_DIV:
-            printf("  div a0, a0, a1\n");
+            gen_expr(node->lhs);
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            gen_expr(node->rhs);
+            printf("  div a5, %s, a5\n", free_reg_names[reg]);
+            free_regs[reg] = true;
             return;
         case ND_EQ:
         case ND_NE:

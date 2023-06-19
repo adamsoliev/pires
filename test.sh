@@ -15,9 +15,7 @@ assert() {
     input="$2"
 
     ./pires "$input" > tmp.s || exit
-
     riscv64-unknown-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
-
     qemu-riscv64 -L /home/adam/dev/riscv/sysroot ./tmp
 
     actual="$?"
@@ -34,9 +32,14 @@ assert 0 "int main() { return 0; }"
 assert 42 "int main() { return 42; }"
 assert 114 "int main() { return 81+42-9; }"
 assert 41 "int main() { return 12 + 34 - 5; }"
-# assert 7 "int main() { return 1+2*3; }"
-# assert 9 "int main() { return (1+2)*3; }"
-# assert 70 "int main() { return 1 + 2 * 3 - 4 / 2 + 5 * (6 + 7); }"
+assert 7 "int main() { return 1+2*3; }"
+assert 9 "int main() { return 1+2*3+2; }"
+assert 13 "int main() { return 1+2*3*2; }"
+assert 3 "int main() { return 1+4/2; }"
+assert 2 "int main() { return 1+4/2/2; }"
+assert 4 "int main() { return 1+10/2-2; }"
+assert 9 "int main() { return (1+2)*3; }"
+assert 70 "int main() { return 1 + 2 * 3 - 4 / 2 + 5 * (6 + 7); }"
 # assert 4 "int main() { return -1+2--3; }"
 # assert 1 "int main() { return - -1; }"
 # assert 1 "int main() { return - - +1; }"
