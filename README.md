@@ -15,7 +15,7 @@ Pires is a C compiler that implements most C99 features and is targeted at RISC-
 
 ---
 
-- Function declaration and definition.
+- ~~Function declaration and definition.~~
 - Parameter passing: pass by value, pass by reference.
 - Return types: void, int, etc.
 - Recursive functions.
@@ -29,7 +29,7 @@ Pires is a C compiler that implements most C99 features and is targeted at RISC-
 
 ---
 
-- Arithmetic operators: ~~+, -~~, \*, /, %.
+- Arithmetic operators: ~~+, -, \*, /~~, %.
 - Relational operators: <, >, <=, >=, ==, !=.
 - Logical operators: &&, ||, !.
 - Bitwise operators: &, |, ^, <<, >>.
