@@ -59,9 +59,11 @@ Pires is a C compiler that implements most C99 features and is targeted at RISC-
 
 ## Build
 
-git clone https://github.com/adamsoliev/pires
-cd pires
-make
+```bash
+$ git clone https://github.com/adamsoliev/pires
+$ cd pires
+$ make
+```
 
 References
 
