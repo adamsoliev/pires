@@ -80,6 +80,8 @@ assert 0 "int main() { int a = 23; int b = 32; return a >= b; }"
 assert 1 "int main() { int a = 23; int b = 32; return a < b; }"
 assert 1 "int main() { int a = 23; int b = 32; return a <= b; }"
 
+assert 1 "int main() { int a = -23; int b = 24; return a + b; }"
+
 # assert 3 "int main() { if (0) return 2; return 3; }"
 # assert 3 "int main() { if (1-1) return 2; return 3; }"
 # assert 2 "int main() { if (1) return 2; return 3; }"

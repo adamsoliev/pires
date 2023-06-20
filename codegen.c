@@ -69,7 +69,7 @@ static void gen_expr(struct Node *node) {
             return;
         case ND_NEG:
             gen_expr(node->lhs);
-            printf("  neg a0, a0\n");
+            printf("  neg a5, a5\n");
             return;
         case ND_VAR:
             // gen_addr(node);
@@ -99,7 +99,7 @@ static void gen_expr(struct Node *node) {
             printf("   call %s\n", node->funcname);
             return;
         }
-        unsigned reg;
+            unsigned reg;
         case ND_ADD:
             gen_expr(node->rhs);
             reg = get_free_reg();
