@@ -72,6 +72,7 @@ static unsigned load(struct Node *node) {
         case ND_SUB:
         case ND_MUL:
         case ND_DIV:
+        case ND_NEG:
             gen_expr(node);
             printf("  mv %s, a5\n", free_reg_names[reg]);
             return reg;
