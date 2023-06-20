@@ -62,7 +62,38 @@ static void gen_addr(struct Node *node) {
     error_tok(node->token, "Not an lvalue");
 }
 
+static unsigned load(struct Node *node) {
+    unsigned reg = get_free_reg();
+    switch (node->kind) {
+        case ND_NUM:
+            printf("  li %s, %d\n", free_reg_names[reg], node->val);
+            return reg;
+        case ND_ADD:
+        case ND_SUB:
+        case ND_MUL:
+        case ND_DIV:
+            gen_expr(node);
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            return reg;
+        default:
+            break;
+    }
+    error_tok(node->token, "Not loadable");
+}
+
+static void store(struct Node *node, unsigned reg) {
+    switch (node->kind) {
+        case ND_VAR:
+            printf("  sw %s, %d(s0)\n", free_reg_names[reg], node->var->offset);
+            return;
+        default:
+            break;
+    }
+    error_tok(node->token, "Not storable");
+}
+
 static void gen_expr(struct Node *node) {
+    unsigned reg;
     switch (node->kind) {
         case ND_NUM:
             printf("  li a5, %d\n", node->val);
@@ -72,7 +103,6 @@ static void gen_expr(struct Node *node) {
             printf("  neg a5, a5\n");
             return;
         case ND_VAR:
-            // gen_addr(node);
             printf("  ld a5, %d(s0)\n", node->var->offset);
             return;
         case ND_DEREF:
@@ -83,8 +113,8 @@ static void gen_expr(struct Node *node) {
             gen_addr(node->lhs);
             return;
         case ND_ASSIGN:
-            gen_expr(node->rhs);
-            gen_addr(node->lhs);
+            reg = load(node->rhs);
+            store(node->lhs, reg);
             return;
         case ND_FUNCALL: {
             int nargs = 0;
@@ -99,7 +129,6 @@ static void gen_expr(struct Node *node) {
             printf("   call %s\n", node->funcname);
             return;
         }
-            unsigned reg;
         case ND_ADD:
             gen_expr(node->rhs);
             reg = get_free_reg();
