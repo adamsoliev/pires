@@ -5,8 +5,9 @@
 
 static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};
-static bool free_regs[15] = {true, true, true, true, true, true, true, true,
-                             true, true, true, true, true, true, true};
+// FOCUSME: a5 is an accumulator register, so it's not free
+static bool free_regs[15] = {true, true, true, true, true, false, true, true,
+                             true, true, true, true, true, true,  true};
 static char *free_reg_names[15] = {"a0", "a1", "a2", "a3", "a4",
                                    "a5", "a6", "a7", "t0", "t1",
                                    "t2", "t3", "t4", "t5", "t6"};
@@ -98,16 +99,6 @@ static void gen_expr(struct Node *node) {
             printf("   call %s\n", node->funcname);
             return;
         }
-        default:
-            break;
-    }
-
-    // gen_expr(node->rhs);
-    // push();
-    // gen_expr(node->lhs);
-    // pop("a1");
-
-    switch (node->kind) {
         unsigned reg;
         case ND_ADD:
             gen_expr(node->rhs);
@@ -147,19 +138,28 @@ static void gen_expr(struct Node *node) {
             reg = get_free_reg();
             printf("  mv %s, a5\n", free_reg_names[reg]);
             gen_expr(node->rhs);
-            printf("    xor a5, %s, a5\n", free_reg_names[reg]);
+            printf("  xor a5, %s, a5\n", free_reg_names[reg]);
             free_regs[reg] = true;
             if (node->kind == ND_EQ)
-                printf("    seqz a5, a5\n");
+                printf("  seqz a5, a5\n");
             else
-                printf("    snez a5, a5\n");
+                printf("  snez a5, a5\n");
             return;
         case ND_LT:
-            printf("    slt a0, a0, a1\n");
+            gen_expr(node->lhs);
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            gen_expr(node->rhs);
+            printf("  slt a5, %s, a5\n", free_reg_names[reg]);
+            free_regs[reg] = true;
             return;
         case ND_LE:
-            printf("    slt a0, a1, a0\n");
-            printf("    xori a0, a0, 1\n");
+            gen_expr(node->lhs);
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            gen_expr(node->rhs);
+            printf("  slt a5, a5, %s\n", free_reg_names[reg]);
+            printf("  xori a5, a5, 1\n");
             return;
         default:
             break;
