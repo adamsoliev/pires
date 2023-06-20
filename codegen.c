@@ -143,11 +143,16 @@ static void gen_expr(struct Node *node) {
             return;
         case ND_EQ:
         case ND_NE:
-            printf("    xor a0, a0, a1\n");
+            gen_expr(node->lhs);
+            reg = get_free_reg();
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            gen_expr(node->rhs);
+            printf("    xor a5, %s, a5\n", free_reg_names[reg]);
+            free_regs[reg] = true;
             if (node->kind == ND_EQ)
-                printf("    seqz a0, a0\n");
+                printf("    seqz a5, a5\n");
             else
-                printf("    snez a0, a0\n");
+                printf("    snez a5, a5\n");
             return;
         case ND_LT:
             printf("    slt a0, a0, a1\n");
