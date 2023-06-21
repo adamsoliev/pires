@@ -91,6 +91,10 @@ static void store(struct Node *node, unsigned reg) {
         case ND_VAR:
             printf("  sd %s, %d(s0)\n", free_reg_names[reg], node->var->offset);
             return;
+        case ND_DEREF:
+            gen_expr(node->lhs);
+            printf("  sd %s, 0(a5)\n", free_reg_names[reg]);
+            return;
         default:
             break;
     }
