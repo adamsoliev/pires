@@ -50,8 +50,8 @@ static int align_to(int n, int align) {
 static void gen_addr(struct Node *node) {
     switch (node->kind) {
         case ND_VAR:
-            // printf("  addi a0, fp, %d\n", node->var->offset);
-            printf("  sw a5, %d(s0)\n", node->var->offset);
+            printf("  addi a5, s0, %d\n", node->var->offset);
+            // printf("  sw a5, %d(s0)\n", node->var->offset);
             return;
         case ND_DEREF:
             gen_expr(node->lhs);
@@ -76,6 +76,10 @@ static unsigned load(struct Node *node) {
             gen_expr(node);
             printf("  mv %s, a5\n", free_reg_names[reg]);
             return reg;
+        case ND_ADDR:
+            gen_addr(node->lhs);
+            printf("  mv %s, a5\n", free_reg_names[reg]);
+            return reg;
         default:
             break;
     }
@@ -85,7 +89,7 @@ static unsigned load(struct Node *node) {
 static void store(struct Node *node, unsigned reg) {
     switch (node->kind) {
         case ND_VAR:
-            printf("  sw %s, %d(s0)\n", free_reg_names[reg], node->var->offset);
+            printf("  sd %s, %d(s0)\n", free_reg_names[reg], node->var->offset);
             return;
         default:
             break;
@@ -108,7 +112,7 @@ static void gen_expr(struct Node *node) {
             return;
         case ND_DEREF:
             gen_expr(node->lhs);
-            printf("  ld a0, 0(a0)\n");
+            printf("  lw a5, 0(a5)\n");
             return;
         case ND_ADDR:
             gen_addr(node->lhs);
