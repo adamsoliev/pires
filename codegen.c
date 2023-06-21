@@ -6,7 +6,7 @@
 static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};
 // FOCUSME: a5 is an accumulator register, so it's not free
-static bool free_regs[15] = {true, true, true, true, true, false, true, true,
+static bool free_regs[15] = {false, true, true, true, true, false, true, true,
                              true, true, true, true, true, true,  true};
 static char *free_reg_names[15] = {"a0", "a1", "a2", "a3", "a4",
                                    "a5", "a6", "a7", "t0", "t1",
@@ -112,7 +112,7 @@ static void gen_expr(struct Node *node) {
             return;
         case ND_DEREF:
             gen_expr(node->lhs);
-            printf("  lw a5, 0(a5)\n");
+            printf("  ld a5, 0(a5)\n");
             return;
         case ND_ADDR:
             gen_addr(node->lhs);
@@ -249,7 +249,7 @@ static void assign_lvar_offsets(struct Function *prog) {
     for (struct Function *fn = prog; fn; fn = fn->next) {
         int offset = 8;  // caller's frame pointer
         for (struct Obj *var = fn->locals; var; var = var->next) {
-            offset += 4;
+            offset += 8;
             var->offset = -offset;
         }
         offset += 16;
