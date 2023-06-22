@@ -1,6 +1,7 @@
 #!/bin/bash
 
-cat <<EOF | riscv64-unknown-linux-gnu-gcc -xc -c -o tmp2.o -
+# cat <<EOF | riscv64-unknown-linux-gnu-gcc -xc -c -o tmp2.o -
+cat <<EOF | riscv64-linux-gnu-gcc -xc -c -o tmp2.o -
 int ret3() { return 3; }
 int ret5() { return 5; }
 int add(int x, int y) { return x + y; }
@@ -18,7 +19,8 @@ assert() {
     # riscv64-unknown-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
     # riscv64-unknown-linux-gnu-gcc -static -o tmp tmp.s
     riscv64-linux-gnu-gcc -static -o tmp tmp.s
-    qemu-riscv64 -L /home/adam/dev/riscv/sysroot ./tmp
+    # qemu-riscv64 -L /home/adam/dev/riscv/sysroot ./tmp
+    qemu-riscv64-static ./tmp
 
     actual="$?"
 
