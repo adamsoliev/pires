@@ -7,7 +7,7 @@ static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};
 // FOCUSME: a5 is an accumulator register, so it's not free
 static bool free_regs[15] = {false, true, true, true, true, false, true, true,
-                             true, true, true, true, true, true,  true};
+                             true,  true, true, true, true, true,  true};
 static char *free_reg_names[15] = {"a0", "a1", "a2", "a3", "a4",
                                    "a5", "a6", "a7", "t0", "t1",
                                    "t2", "t3", "t4", "t5", "t6"};
@@ -204,18 +204,39 @@ static void gen_expr(struct Node *node) {
     }
     error_tok(node->token, "Invalid expression");
 };
+/*
+"int main() { 
+    if (1) 
+        return 2; 
+    return 3; 
+}"
 
+    li a5, 1
+    beqz a5, .L1
+    li a5, 2
+    j .L2
+.L1:
+    li a5, 3
+.L2:
+    // take care of stack
+    jr ra
+
+
+*/
 static void gen_stmt(struct Node *node) {
     switch (node->kind) {
         case ND_IF: {
-            int c = count();
+            int lx = count();
+            int ly = count();
             gen_expr(node->cond);
-            printf("  beqz a0, .L.else.%d\n", c);
+            printf("  beqz a5, .L%d\n", lx);
             gen_stmt(node->then);
-            printf("  j .L.end.%d\n", c);
-            printf(".L.else.%d:\n", c);
-            if (node->els) gen_stmt(node->els);
-            printf(".L.end.%d:\n", c);
+            printf("  j .L%d\n", ly);
+            printf(".L%d:\n", lx);
+            if (node->els) {
+                gen_stmt(node->els);
+            }
+            printf(".L%d:\n", ly);
             return;
         }
         case ND_FOR: {

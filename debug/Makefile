@@ -1,7 +1,7 @@
 # Makefile for building, running and debugging assembly code on qemu-riscv64
 
 # Define the name of your assembly file (without the .s extension)
-ASSEMBLY_FILE = main
+ASSEMBLY_FILE = cond_ex1
 
 TARGET = $(ASSEMBLY_FILE)
 
@@ -9,6 +9,7 @@ QEMU = qemu-riscv64
 
 CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -march=rv64g -mabi=lp64d
+CFLAGS = -march=rv64g 
 
 all: $(TARGET)
 
