@@ -4,7 +4,6 @@ Pires is a C compiler that implements most C99 features and is targeted at RISC-
 
 ## Features roadmap
 
-
 ## Internals
 
 - Tokenize: A tokenizer takes in a string and outputs a list of tokens
@@ -52,6 +51,10 @@ main:
   addi sp, sp, 32
   jr ra
 ```
+
+## Contribute
+
+Contributions are welcome. If you aren't sure where to start, look at the test.sh file and try to make commented out tests pass.
 
 ## References
 
