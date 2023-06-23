@@ -204,25 +204,7 @@ static void gen_expr(struct Node *node) {
     }
     error_tok(node->token, "Invalid expression");
 };
-/*
-"int main() { 
-    if (1) 
-        return 2; 
-    return 3; 
-}"
 
-    li a5, 1
-    beqz a5, .L1
-    li a5, 2
-    j .L2
-.L1:
-    li a5, 3
-.L2:
-    // take care of stack
-    jr ra
-
-
-*/
 static void gen_stmt(struct Node *node) {
     switch (node->kind) {
         case ND_IF: {
@@ -241,16 +223,17 @@ static void gen_stmt(struct Node *node) {
         }
         case ND_FOR: {
             int c = count();
+            int d = count();
             if (node->init) gen_stmt(node->init);
-            printf(".L.begin.%d:\n", c);
+            printf(".L%d:\n", c);
             if (node->cond) {
                 gen_expr(node->cond);
-                printf("  beqz a0, .L.end.%d\n", c);
+                printf("  beqz a5, .L%d\n", d);
             }
             gen_stmt(node->then);
             if (node->inc) gen_expr(node->inc);
-            printf("  j .L.begin.%d\n", c);
-            printf(".L.end.%d:\n", c);
+            printf("  j .L%d\n", c);
+            printf(".L%d:\n", d);
             return;
         }
         case ND_BLOCK:
