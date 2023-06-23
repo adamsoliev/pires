@@ -1,7 +1,7 @@
 # Makefile for building, running and debugging assembly code on qemu-riscv64
 
 # Define the name of your assembly file (without the .s extension)
-ASSEMBLY_FILE = cond_ex1
+ASSEMBLY_FILE = tmp
 
 TARGET = $(ASSEMBLY_FILE)
 
@@ -19,8 +19,9 @@ $(TARGET): $(ASSEMBLY_FILE).s
 run: $(TARGET)
 	$(QEMU) -L /opt/riscv/sysroot ./$<
 
+# $(QEMU) -L /opt/riscv/sysroot -g 1234 -S ./$< &
 debug: $(TARGET)
-	$(QEMU) -L /opt/riscv/sysroot -g 1234 -S ./$< &
+	$(QEMU) -L /opt/riscv/sysroot -g 1234 ./$< &
 	riscv64-unknown-linux-gnu-gdb -ex "target remote:1234" $<
 
 # riscv64-unknown-linux-gnu-gdb -batch -ex 'disassemble load_gp' $< 

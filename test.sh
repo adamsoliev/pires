@@ -1,11 +1,10 @@
 #!/bin/bash
-
-# cat <<EOF | riscv64-unknown-linux-gnu-gcc -xc -c -o tmp2.o -
 cat <<EOF | riscv64-linux-gnu-gcc -xc -c -o tmp2.o -
 int ret3() { return 3; }
 int ret5() { return 5; }
 int add(int x, int y) { return x + y; }
 int sub(int x, int y) { return x - y; }
+
 int add6(int a, int b, int c, int d, int e, int f) {
     return a + b + c + d + e + f;
 }
@@ -16,10 +15,8 @@ assert() {
     input="$2"
 
     ./pires "$input" > tmp.s || exit
-    # riscv64-unknown-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
-    # riscv64-unknown-linux-gnu-gcc -static -o tmp tmp.s
-    riscv64-linux-gnu-gcc -static -o tmp tmp.s
-    # qemu-riscv64 -L /home/adam/dev/riscv/sysroot ./tmp
+
+    riscv64-linux-gnu-gcc -static -o tmp tmp.s tmp2.o
     qemu-riscv64-static ./tmp
 
     actual="$?"
@@ -108,16 +105,16 @@ assert 55 "int main() { int i=0; int j=0; for (i=0; i<=10; i=i+1) j=i+j; return 
 # assert 10 "int main() { int j=0; for (int i=0; i<=10; i=i+1) j=i+j; return j; }"
 assert 3 "int main() { for (;;) return 3; return 5; }"
 
-# assert 10 "int main() { int i=0; while(i<10) i=i+1; return i; }"
+assert 10 "int main() { int i=0; while(i<10) i=i+1; return i; }"
 
-# assert 3 "int main() { {1; {2;} return 3;} }"
-# assert 5 "int main() { ;;; return 5; }"
+assert 3 "int main() { {1; {2;} return 3;} }"
+assert 5 "int main() { ;;; return 5; }"
 
-# assert 10 "int main() { int i=0; while(i<10) i=i+1; return i; }"
-# assert 55 "int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j; }"
+assert 10 "int main() { int i=0; while(i<10) i=i+1; return i; }"
+assert 55 "int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j; }"
 
-# assert 3 "int main() { return ret3(); }"
-# assert 5 "int main() { return ret5(); }"
+assert 3 "int main() { return ret3(); } "
+assert 5 "int main() { return ret5(); }"
 # assert 8 "int main() { return add(3, 5); }"
 # assert 2 "int main() { return sub(5, 3); }"
 # assert 21 "int main() { return add6(1,2,3,4,5,6); }"

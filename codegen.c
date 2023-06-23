@@ -126,16 +126,17 @@ static void gen_expr(struct Node *node) {
             store(node->lhs, reg);
             return;
         case ND_FUNCALL: {
-            int nargs = 0;
-            for (struct Node *arg = node->args; arg; arg = arg->next) {
-                gen_expr(arg);
-                push();
-                nargs++;
-            }
-            for (int i = nargs - 1; i >= 0; i--) {
-                pop(argreg[i]);
-            }
-            printf("   call %s\n", node->funcname);
+            // int nargs = 0;
+            // for (struct Node *arg = node->args; arg; arg = arg->next) {
+            //     gen_expr(arg);
+            //     // push();
+            //     nargs++;
+            // }
+            // for (int i = nargs - 1; i >= 0; i--) {
+            //     // pop(argreg[i]);
+            // }
+            printf("  call %s\n", node->funcname);
+            printf("  mv a5, a0\n");
             return;
         }
         case ND_ADD:
@@ -254,7 +255,7 @@ static void gen_stmt(struct Node *node) {
 
 static void assign_lvar_offsets(struct Function *prog) {
     for (struct Function *fn = prog; fn; fn = fn->next) {
-        int offset = 8;  // caller's frame pointer
+        int offset = 16;  // caller's frame pointer
         for (struct Obj *var = fn->locals; var; var = var->next) {
             offset += 8;
             var->offset = -offset;
@@ -273,7 +274,7 @@ void codegen(struct Function *prog) {
 
         // prologue
         printf("  addi sp, sp, %d\n", -fn->stack_size);
-        // printf("  sd ra, 8(sp)\n");
+        printf("  sd ra, %d(sp)\n", fn->stack_size - 16);
         printf("  sd s0, %d(sp)\n", fn->stack_size - 8);
         printf("  addi s0, sp, %d\n", fn->stack_size);
 
@@ -289,7 +290,7 @@ void codegen(struct Function *prog) {
         // epilogue
         printf(".L.return.%s:\n", current_fn->name);
         printf("  mv a0,a5\n");
-        // printf("  ld ra, 8(sp)\n");
+        printf("  ld ra, %d(sp)\n", fn->stack_size - 16);
         printf("  ld s0,%d(sp)\n", fn->stack_size - 8);
         printf("  addi sp, sp, %d\n", fn->stack_size);
         printf("  jr ra\n");
