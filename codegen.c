@@ -6,8 +6,8 @@
 static int depth;
 static char *argreg[] = {"a0", "a1", "a2", "a3", "a4", "a5"};
 // FOCUSME: a5 is an accumulator register, so it's not free
-static bool free_regs[15] = {false, true, true, true, true, false, true, true,
-                             true,  true, true, true, true, true,  true};
+static bool free_regs[15] = {false, false, false, true, true, false, true, true,
+                             true,  true,  true,  true, true, true,  true};
 static char *free_reg_names[15] = {"a0", "a1", "a2", "a3", "a4",
                                    "a5", "a6", "a7", "t0", "t1",
                                    "t2", "t3", "t4", "t5", "t6"};
@@ -126,14 +126,15 @@ static void gen_expr(struct Node *node) {
             store(node->lhs, reg);
             return;
         case ND_FUNCALL: {
-            // int nargs = 0;
-            // for (struct Node *arg = node->args; arg; arg = arg->next) {
-            //     gen_expr(arg);
-            //     // push();
-            //     nargs++;
-            // }
+            int nargs = 0;
+            for (struct Node *arg = node->args; arg; arg = arg->next) {
+                gen_expr(arg);
+                printf("  mv %s, a5\n", argreg[nargs]);
+                // push();
+                nargs++;
+            }
             // for (int i = nargs - 1; i >= 0; i--) {
-            //     // pop(argreg[i]);
+            // pop(argreg[i]);
             // }
             printf("  call %s\n", node->funcname);
             printf("  mv a5, a0\n");
