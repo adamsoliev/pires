@@ -208,32 +208,30 @@ static void gen_expr(struct Node *node) {
 static void gen_stmt(struct Node *node) {
     switch (node->kind) {
         case ND_IF: {
-            int lx = count();
-            int ly = count();
+            int c = count();
             gen_expr(node->cond);
-            printf("  beqz a5, .L%d\n", lx);
+            printf("  beqz a5, .L.else.%d\n", c);
             gen_stmt(node->then);
-            printf("  j .L%d\n", ly);
-            printf(".L%d:\n", lx);
+            printf("  j .L.end.%d\n", c);
+            printf(".L.else.%d:\n", c);
             if (node->els) {
                 gen_stmt(node->els);
             }
-            printf(".L%d:\n", ly);
+            printf(".L.end.%d:\n", c);
             return;
         }
         case ND_FOR: {
             int c = count();
-            int d = count();
             if (node->init) gen_stmt(node->init);
-            printf(".L%d:\n", c);
+            printf(".L.begin.%d:\n", c);
             if (node->cond) {
                 gen_expr(node->cond);
-                printf("  beqz a5, .L%d\n", d);
+                printf("  beqz a5, .L.end.%d\n", c);
             }
             gen_stmt(node->then);
             if (node->inc) gen_expr(node->inc);
-            printf("  j .L%d\n", c);
-            printf(".L%d:\n", d);
+            printf("  j .L.begin.%d\n", c);
+            printf(".L.end.%d:\n", c);
             return;
         }
         case ND_BLOCK:
@@ -243,6 +241,7 @@ static void gen_stmt(struct Node *node) {
             return;
         case ND_RETURN:
             gen_expr(node->lhs);
+            printf("  j .L.return.%s\n", current_fn->name);
             return;
         case ND_EXPR_STMT:
             gen_expr(node->lhs);
@@ -288,6 +287,7 @@ void codegen(struct Function *prog) {
         assert(depth == 0);
 
         // epilogue
+        printf(".L.return.%s:\n", current_fn->name);
         printf("  mv a0,a5\n");
         // printf("  ld ra, 8(sp)\n");
         printf("  ld s0,%d(sp)\n", fn->stack_size - 8);
